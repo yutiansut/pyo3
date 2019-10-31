@@ -509,11 +509,12 @@
 <span class="doccomment">//! Interaction with python&#39;s global interpreter lock</span>
 
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">ffi</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">internal_tricks</span>::<span class="ident">Unsendable</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">types</span>::<span class="ident">PyAny</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">Python</span>;
 <span class="kw">use</span> <span class="ident">spin</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">ptr</span>::<span class="ident">NonNull</span>;
-<span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">any</span>, <span class="ident">marker</span>, <span class="ident">rc</span>, <span class="ident">sync</span>};
+<span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">any</span>, <span class="ident">sync</span>};
 
 <span class="kw">static</span> <span class="ident">START</span>: <span class="ident">sync</span>::<span class="ident">Once</span> <span class="op">=</span> <span class="ident">sync</span>::<span class="ident">Once</span>::<span class="ident">new</span>();
 <span class="kw">static</span> <span class="ident">START_PYO3</span>: <span class="ident">sync</span>::<span class="ident">Once</span> <span class="op">=</span> <span class="ident">sync</span>::<span class="ident">Once</span>::<span class="ident">new</span>();
@@ -607,9 +608,8 @@
     <span class="ident">owned</span>: <span class="ident">usize</span>,
     <span class="ident">borrowed</span>: <span class="ident">usize</span>,
     <span class="ident">gstate</span>: <span class="ident">ffi</span>::<span class="ident">PyGILState_STATE</span>,
-    <span class="comment">// hack to opt out of Send on stable rust, which doesn&#39;t</span>
-    <span class="comment">// have negative impls</span>
-    <span class="ident">no_send</span>: <span class="ident">marker</span>::<span class="ident">PhantomData</span><span class="op">&lt;</span><span class="ident">rc</span>::<span class="ident">Rc</span><span class="op">&lt;</span>()<span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="comment">// Stable solution for impl !Send</span>
+    <span class="ident">no_send</span>: <span class="ident">Unsendable</span>,
 }
 
 <span class="doccomment">/// The Drop implementation for `GILGuard` will release the GIL.</span>
@@ -687,7 +687,7 @@
     <span class="ident">owned</span>: <span class="ident">usize</span>,
     <span class="ident">borrowed</span>: <span class="ident">usize</span>,
     <span class="ident">pointers</span>: <span class="ident">bool</span>,
-    <span class="ident">no_send</span>: <span class="ident">marker</span>::<span class="ident">PhantomData</span><span class="op">&lt;</span><span class="ident">rc</span>::<span class="ident">Rc</span><span class="op">&lt;</span>()<span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="ident">no_send</span>: <span class="ident">Unsendable</span>,
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;p</span><span class="op">&gt;</span> <span class="ident">GILPool</span><span class="op">&lt;</span><span class="lifetime">&#39;p</span><span class="op">&gt;</span> {
@@ -699,7 +699,7 @@
             <span class="ident">owned</span>: <span class="ident">p</span>.<span class="ident">owned</span>.<span class="ident">len</span>(),
             <span class="ident">borrowed</span>: <span class="ident">p</span>.<span class="ident">borrowed</span>.<span class="ident">len</span>(),
             <span class="ident">pointers</span>: <span class="bool-val">true</span>,
-            <span class="ident">no_send</span>: <span class="ident">marker</span>::<span class="ident">PhantomData</span>,
+            <span class="ident">no_send</span>: <span class="ident">Unsendable</span>::<span class="ident">default</span>(),
         }
     }
     <span class="attribute">#[<span class="ident">inline</span>]</span>
@@ -710,7 +710,7 @@
             <span class="ident">owned</span>: <span class="ident">p</span>.<span class="ident">owned</span>.<span class="ident">len</span>(),
             <span class="ident">borrowed</span>: <span class="ident">p</span>.<span class="ident">borrowed</span>.<span class="ident">len</span>(),
             <span class="ident">pointers</span>: <span class="bool-val">false</span>,
-            <span class="ident">no_send</span>: <span class="ident">marker</span>::<span class="ident">PhantomData</span>,
+            <span class="ident">no_send</span>: <span class="ident">Unsendable</span>::<span class="ident">default</span>(),
         }
     }
 }
@@ -766,7 +766,7 @@
                 <span class="ident">owned</span>: <span class="ident">pool</span>.<span class="ident">owned</span>.<span class="ident">len</span>(),
                 <span class="ident">borrowed</span>: <span class="ident">pool</span>.<span class="ident">borrowed</span>.<span class="ident">len</span>(),
                 <span class="ident">gstate</span>,
-                <span class="ident">no_send</span>: <span class="ident">marker</span>::<span class="ident">PhantomData</span>,
+                <span class="ident">no_send</span>: <span class="ident">Unsendable</span>::<span class="ident">default</span>(),
             }
         }
     }

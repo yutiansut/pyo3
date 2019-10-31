@@ -101,10 +101,12 @@
 <span id="101">101</span>
 <span id="102">102</span>
 <span id="103">103</span>
+<span id="104">104</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">conversion</span>::<span class="ident">FromPyObject</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">conversion</span>::{<span class="ident">PyTryFrom</span>, <span class="ident">ToPyObject</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">err</span>::<span class="ident">PyResult</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">internal_tricks</span>::<span class="ident">Unsendable</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">object</span>::<span class="ident">PyObject</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">types</span>::<span class="ident">PyAny</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">AsPyPointer</span>;
@@ -119,7 +121,7 @@
 <span class="doccomment">///</span>
 <span class="doccomment">/// This type is immutable</span>
 <span class="attribute">#[<span class="ident">repr</span>(<span class="ident">transparent</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PyBytes</span>(<span class="ident">PyObject</span>);
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PyBytes</span>(<span class="ident">PyObject</span>, <span class="ident">Unsendable</span>);
 
 <span class="macro">pyobject_native_type</span><span class="macro">!</span>(
     <span class="ident">PyBytes</span>,

@@ -373,6 +373,7 @@
 <span id="373">373</span>
 <span id="374">374</span>
 <span id="375">375</span>
+<span id="376">376</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Safe Rust wrappers for types defined in the Python `datetime` library</span>
 <span class="doccomment">//!</span>
@@ -401,6 +402,7 @@
     <span class="ident">PyDateTime_TIME_GET_HOUR</span>, <span class="ident">PyDateTime_TIME_GET_MICROSECOND</span>, <span class="ident">PyDateTime_TIME_GET_MINUTE</span>,
     <span class="ident">PyDateTime_TIME_GET_SECOND</span>,
 };
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">internal_tricks</span>::<span class="ident">Unsendable</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">object</span>::<span class="ident">PyObject</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">types</span>::<span class="ident">PyTuple</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">AsPyPointer</span>;
@@ -441,7 +443,7 @@
 }
 
 <span class="doccomment">/// Bindings around `datetime.date`</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PyDate</span>(<span class="ident">PyObject</span>);
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PyDate</span>(<span class="ident">PyObject</span>, <span class="ident">Unsendable</span>);
 <span class="macro">pyobject_native_type</span><span class="macro">!</span>(
     <span class="ident">PyDate</span>,
     <span class="kw-2">*</span><span class="ident">PyDateTimeAPI</span>.<span class="ident">DateType</span>,
@@ -496,7 +498,7 @@
 }
 
 <span class="doccomment">/// Bindings for `datetime.datetime`</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PyDateTime</span>(<span class="ident">PyObject</span>);
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PyDateTime</span>(<span class="ident">PyObject</span>, <span class="ident">Unsendable</span>);
 <span class="macro">pyobject_native_type</span><span class="macro">!</span>(
     <span class="ident">PyDateTime</span>,
     <span class="kw-2">*</span><span class="ident">PyDateTimeAPI</span>.<span class="ident">DateTimeType</span>,
@@ -605,7 +607,7 @@
 }
 
 <span class="doccomment">/// Bindings for `datetime.time`</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PyTime</span>(<span class="ident">PyObject</span>);
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PyTime</span>(<span class="ident">PyObject</span>, <span class="ident">Unsendable</span>);
 <span class="macro">pyobject_native_type</span><span class="macro">!</span>(
     <span class="ident">PyTime</span>,
     <span class="kw-2">*</span><span class="ident">PyDateTimeAPI</span>.<span class="ident">TimeType</span>,
@@ -689,7 +691,7 @@
 <span class="doccomment">/// Bindings for `datetime.tzinfo`</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// This is an abstract base class and should not be constructed directly.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PyTzInfo</span>(<span class="ident">PyObject</span>);
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PyTzInfo</span>(<span class="ident">PyObject</span>, <span class="ident">Unsendable</span>);
 <span class="macro">pyobject_native_type</span><span class="macro">!</span>(
     <span class="ident">PyTzInfo</span>,
     <span class="kw-2">*</span><span class="ident">PyDateTimeAPI</span>.<span class="ident">TZInfoType</span>,
@@ -698,7 +700,7 @@
 );
 
 <span class="doccomment">/// Bindings for `datetime.timedelta`</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PyDelta</span>(<span class="ident">PyObject</span>);
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PyDelta</span>(<span class="ident">PyObject</span>, <span class="ident">Unsendable</span>);
 <span class="macro">pyobject_native_type</span><span class="macro">!</span>(
     <span class="ident">PyDelta</span>,
     <span class="kw-2">*</span><span class="ident">PyDateTimeAPI</span>.<span class="ident">DeltaType</span>,

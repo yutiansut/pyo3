@@ -320,10 +320,12 @@
 <span id="320">320</span>
 <span id="321">321</span>
 <span id="322">322</span>
+<span id="323">323</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">ffi</span>;
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">PyPy</span>))]</span>
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">instance</span>::<span class="ident">PyNativeType</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">internal_tricks</span>::<span class="ident">Unsendable</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">AsPyPointer</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">PyObject</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">Python</span>;
@@ -333,7 +335,7 @@
 
 <span class="doccomment">/// Represents a Python `complex`.</span>
 <span class="attribute">#[<span class="ident">repr</span>(<span class="ident">transparent</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PyComplex</span>(<span class="ident">PyObject</span>);
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PyComplex</span>(<span class="ident">PyObject</span>, <span class="ident">Unsendable</span>);
 
 <span class="macro">pyobject_native_type</span><span class="macro">!</span>(<span class="ident">PyComplex</span>, <span class="ident">ffi</span>::<span class="ident">PyComplex_Type</span>, <span class="ident">ffi</span>::<span class="ident">PyComplex_Check</span>);
 

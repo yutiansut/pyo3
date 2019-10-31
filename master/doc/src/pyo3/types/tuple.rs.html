@@ -312,6 +312,7 @@
 <span id="312">312</span>
 <span id="313">313</span>
 <span id="314">314</span>
+<span id="315">315</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) 2017-present PyO3 Project and Contributors</span>
 
@@ -320,6 +321,7 @@
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">exceptions</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">ffi</span>::{<span class="self">self</span>, <span class="ident">Py_ssize_t</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">instance</span>::{<span class="ident">AsPyRef</span>, <span class="ident">Py</span>, <span class="ident">PyNativeType</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">internal_tricks</span>::<span class="ident">Unsendable</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">object</span>::<span class="ident">PyObject</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">types</span>::<span class="ident">PyAny</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">AsPyPointer</span>;
@@ -330,7 +332,7 @@
 
 <span class="doccomment">/// Represents a Python `tuple` object.</span>
 <span class="attribute">#[<span class="ident">repr</span>(<span class="ident">transparent</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PyTuple</span>(<span class="ident">PyObject</span>);
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PyTuple</span>(<span class="ident">PyObject</span>, <span class="ident">Unsendable</span>);
 
 <span class="macro">pyobject_native_type</span><span class="macro">!</span>(<span class="ident">PyTuple</span>, <span class="ident">ffi</span>::<span class="ident">PyTuple_Type</span>, <span class="ident">ffi</span>::<span class="ident">PyTuple_Check</span>);
 

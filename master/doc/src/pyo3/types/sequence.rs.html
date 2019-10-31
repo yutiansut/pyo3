@@ -676,6 +676,7 @@
 <span id="676">676</span>
 <span id="677">677</span>
 <span id="678">678</span>
+<span id="679">679</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright (c) 2017-present PyO3 Project and Contributors</span>
 
@@ -683,6 +684,7 @@
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">err</span>::{<span class="self">self</span>, <span class="ident">PyDowncastError</span>, <span class="ident">PyErr</span>, <span class="ident">PyResult</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">ffi</span>::{<span class="self">self</span>, <span class="ident">Py_ssize_t</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">instance</span>::<span class="ident">PyNativeType</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">internal_tricks</span>::<span class="ident">Unsendable</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">object</span>::<span class="ident">PyObject</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">objectprotocol</span>::<span class="ident">ObjectProtocol</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">types</span>::{<span class="ident">PyAny</span>, <span class="ident">PyList</span>, <span class="ident">PyTuple</span>};
@@ -691,7 +693,7 @@
 
 <span class="doccomment">/// Represents a reference to a python object supporting the sequence protocol.</span>
 <span class="attribute">#[<span class="ident">repr</span>(<span class="ident">transparent</span>)]</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PySequence</span>(<span class="ident">PyObject</span>);
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">PySequence</span>(<span class="ident">PyObject</span>, <span class="ident">Unsendable</span>);
 <span class="macro">pyobject_native_type_named</span><span class="macro">!</span>(<span class="ident">PySequence</span>);
 
 <span class="kw">impl</span> <span class="ident">PySequence</span> {
