@@ -234,14 +234,27 @@ fn main_(py: Python) -&gt; PyResult&lt;()&gt; {
 about this topic.</p>
 <a class="header" href="#examples-and-tooling" id="examples-and-tooling"><h2>Examples and tooling</h2></a>
 <ul>
-<li><a href="https://github.com/PyO3/pyo3/tree/master/examples/word-count">examples/word-count</a> <em>Counting the occurrences of a word in a text file</em></li>
+<li><a href="examples/word-count">examples/word-count</a> <em>Counting the occurrences of a word in a text file</em></li>
 <li><a href="https://github.com/mre/hyperjson">hyperjson</a> <em>A hyper-fast Python module for reading/writing JSON data using Rust's serde-json</em></li>
-<li><a href="https://github.com/rust-numpy/rust-numpy">rust-numpy</a> <em>Rust binding of NumPy C-API</em></li>
+<li><a href="https://github.com/PyO3/rust-numpy">rust-numpy</a> <em>Rust binding of NumPy C-API</em></li>
 <li><a href="https://github.com/PyO3/setuptools-rust/tree/master/html-py-ever">html-py-ever</a> <em>Using <a href="https://github.com/servo/html5ever">html5ever</a> through <a href="https://github.com/kuchiki-rs/kuchiki">kuchiki</a> to speed up html parsing and css-selecting.</em></li>
 <li><a href="https://github.com/PyO3/pyo3-built">pyo3-built</a> <em>Simple macro to expose metadata obtained with the <a href="https://crates.io/crates/built"><code>built</code></a> crate as a <a href="https://pyo3.github.io/pyo3/pyo3/struct.PyDict.html"><code>PyDict</code></a></em></li>
 <li><a href="https://github.com/ManifoldFR/point-process-rust/tree/master/pylib">point-process</a> <em>High level API for pointprocesses as a Python library</em></li>
-<li><a href="https://github.com/autopilot-rs/autopy">autopy</a> <em>A simple, cross-platform GUI automation library for Python and Rust.</em></li>
+<li><a href="https://github.com/autopilot-rs/autopy">autopy</a> <em>A simple, cross-platform GUI automation library for Python and Rust.</em>
+<ul>
+<li>Contains an example of building wheels on TravisCI and appveyor using <a href="https://github.com/joerick/cibuildwheel">cibuildwheel</a></li>
+</ul>
+</li>
 <li><a href="https://github.com/ijl/orjson">orjson</a>  <em>Fast Python JSON library</em></li>
+<li><a href="https://github.com/dronesforwork/inline-python">inline-python</a> <em>Inline Python code directly in your Rust code</em></li>
+<li><a href="https://github.com/kngwyu/rogue-gym">Rogue-Gym</a> <em>Customizable rogue-like game for AI experiments</em>
+<ul>
+<li>Contains an example of building wheels on Azure Pipelines</li>
+</ul>
+</li>
+<li><a href="https://github.com/thedrow/fastuuid/">fastuuid</a> <em>Python bindings to Rust's UUID library</em></li>
+<li><a href="https://github.com/wasmerio/python-ext-wasm">python-ext-wasm</a> <em>Python library to run WebAssembly binaries</em></li>
+<li><a href="https://github.com/gperinazzo/dict-derive">dict-derive</a> <em>Derive FromPyObject to automatically transform Python dicts into Rust structs</em></li>
 </ul>
 <a class="header" href="#type-conversions" id="type-conversions"><h1>Type Conversions</h1></a>
 <p>PyO3 provides some handy traits to convert between Python types and Rust types.</p>
