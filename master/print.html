@@ -237,7 +237,7 @@ fn main_(py: Python) -&gt; PyResult&lt;()&gt; {
 about this topic.</p>
 <a class="header" href="#examples-and-tooling" id="examples-and-tooling"><h2>Examples and tooling</h2></a>
 <ul>
-<li><a href="examples/word-count">examples/word-count</a> <em>Counting the occurrences of a word in a text file</em></li>
+<li><a href="https://github.com/PyO3/pyo3/tree/master/examples/word-count">examples/word-count</a> <em>Counting the occurrences of a word in a text file</em></li>
 <li><a href="https://github.com/mre/hyperjson">hyperjson</a> <em>A hyper-fast Python module for reading/writing JSON data using Rust's serde-json</em></li>
 <li><a href="https://github.com/PyO3/rust-numpy">rust-numpy</a> <em>Rust binding of NumPy C-API</em></li>
 <li><a href="https://github.com/PyO3/setuptools-rust/tree/master/html-py-ever">html-py-ever</a> <em>Using <a href="https://github.com/servo/html5ever">html5ever</a> through <a href="https://github.com/kuchiki-rs/kuchiki">kuchiki</a> to speed up html parsing and css-selecting.</em></li>
@@ -559,7 +559,7 @@ fn sum_as_string(a:i64, b:i64) -&gt; String {
 # fn main() {}
 </code></pre></pre>
 <p>The <code>#[pymodule]</code> procedural macro attribute takes care of exporting the initialization function of your module to Python. It can take as an argument the name of your module, which must be the name of the <code>.so</code> or <code>.pyd</code> file; the default is the Rust function's name.</p>
-<p>To import the module, either copy the shared library as described in <a href="./overview.html">Get Started</a> or use a tool, e.g. <code>maturin develop</code> with <a href="https://github.com/PyO3/maturin">maturin</a> or <code>python setup.py develop</code> with <a href="https://github.com/PyO3/setuptools-rust">setuptools-rust</a>.</p>
+<p>To import the module, either copy the shared library as described in <a href="./get_started.html">Get Started</a> or use a tool, e.g. <code>maturin develop</code> with <a href="https://github.com/PyO3/maturin">maturin</a> or <code>python setup.py develop</code> with <a href="https://github.com/PyO3/setuptools-rust">setuptools-rust</a>.</p>
 <a class="header" href="#documentation" id="documentation"><h2>Documentation</h2></a>
 <p>The <a href="https://doc.rust-lang.org/stable/book/first-edition/comments.html">Rust doc comments</a> of the module initialization function will be applied automatically as the Python doc string of your module.</p>
 <pre><code class="language-python">import rust2py
