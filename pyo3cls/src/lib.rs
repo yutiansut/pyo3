@@ -4,13 +4,11 @@
 
 extern crate proc_macro;
 use proc_macro::TokenStream;
-use proc_macro2::Span;
 use pyo3_derive_backend::{
-    add_fn_to_module, build_py_class, build_py_methods, build_py_proto, get_doc,
+    build_py_class, build_py_function, build_py_methods, build_py_proto, get_doc,
     process_functions_in_module, py_init, PyClassArgs, PyFunctionAttr,
 };
 use quote::quote;
-use syn::ext::IdentExt;
 use syn::parse_macro_input;
 
 /// Internally, this proc macro create a new c function called `PyInit_{my_module}`
@@ -27,7 +25,12 @@ pub fn pymodule(attr: TokenStream, input: TokenStream) -> TokenStream {
 
     process_functions_in_module(&mut ast);
 
-    let expanded = py_init(&ast.sig.ident, &modname, get_doc(&ast.attrs, false));
+    let doc = match get_doc(&ast.attrs, None, false) {
+        Ok(doc) => doc,
+        Err(err) => return err.to_compile_error().into(),
+    };
+
+    let expanded = py_init(&ast.sig.ident, &modname, doc);
 
     quote!(
         #ast
@@ -75,11 +78,10 @@ pub fn pymethods(_: TokenStream, input: TokenStream) -> TokenStream {
 
 #[proc_macro_attribute]
 pub fn pyfunction(attr: TokenStream, input: TokenStream) -> TokenStream {
-    let ast = parse_macro_input!(input as syn::ItemFn);
+    let mut ast = parse_macro_input!(input as syn::ItemFn);
     let args = parse_macro_input!(attr as PyFunctionAttr);
 
-    let python_name = syn::Ident::new(&ast.sig.ident.unraw().to_string(), Span::call_site());
-    let expanded = add_fn_to_module(&ast, &python_name, args.arguments);
+    let expanded = build_py_function(&mut ast, args).unwrap_or_else(|e| e.to_compile_error());
 
     quote!(
         #ast

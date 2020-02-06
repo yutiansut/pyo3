@@ -13,7 +13,7 @@ use syn::Ident;
 
 /// Generates the function that is called by the python interpreter to initialize the native
 /// module
-pub fn py_init(fnname: &Ident, name: &Ident, doc: syn::Lit) -> TokenStream {
+pub fn py_init(fnname: &Ident, name: &Ident, doc: syn::LitStr) -> TokenStream {
     let cb_name = Ident::new(&format!("PyInit_{}", name), Span::call_site());
 
     quote! {
@@ -36,7 +36,7 @@ pub fn process_functions_in_module(func: &mut syn::ItemFn) {
             if let Some((module_name, python_name, pyfn_attrs)) =
                 extract_pyfn_attrs(&mut func.attrs)
             {
-                let function_to_python = add_fn_to_module(func, &python_name, pyfn_attrs);
+                let function_to_python = add_fn_to_module(func, python_name, pyfn_attrs);
                 let function_wrapper_ident = function_wrapper_ident(&func.sig.ident);
                 let item: syn::ItemFn = syn::parse_quote! {
                     fn block_wrapper() {
@@ -133,8 +133,8 @@ fn function_wrapper_ident(name: &Ident) -> Ident {
 /// Generates python wrapper over a function that allows adding it to a python module as a python
 /// function
 pub fn add_fn_to_module(
-    func: &syn::ItemFn,
-    python_name: &Ident,
+    func: &mut syn::ItemFn,
+    python_name: Ident,
     pyfn_attrs: Vec<pyfunction::Argument>,
 ) -> TokenStream {
     let mut arguments = Vec::new();
@@ -147,17 +147,32 @@ pub fn add_fn_to_module(
 
     let ty = method::get_return_info(&func.sig.output);
 
-    let spec = method::FnSpec {
-        tp: method::FnType::Fn,
-        attrs: pyfn_attrs,
-        args: arguments,
-        output: ty,
+    let text_signature = match utils::parse_text_signature_attrs(&mut func.attrs, &python_name) {
+        Ok(text_signature) => text_signature,
+        Err(err) => return err.to_compile_error(),
+    };
+    let doc = match utils::get_doc(&func.attrs, text_signature, true) {
+        Ok(doc) => doc,
+        Err(err) => return err.to_compile_error(),
     };
 
     let function_wrapper_ident = function_wrapper_ident(&func.sig.ident);
 
+    let spec = method::FnSpec {
+        tp: method::FnType::Fn,
+        name: &function_wrapper_ident,
+        python_name,
+        attrs: pyfn_attrs,
+        args: arguments,
+        output: ty,
+        doc,
+    };
+
+    let doc = &spec.doc;
+
+    let python_name = &spec.python_name;
+
     let wrapper = function_c_wrapper(&func.sig.ident, &spec);
-    let doc = utils::get_doc(&func.attrs, true);
 
     let tokens = quote! {
         fn #function_wrapper_ident(py: pyo3::Python) -> pyo3::PyObject {

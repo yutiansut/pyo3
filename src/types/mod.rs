@@ -25,28 +25,6 @@ pub use self::string::{PyString, PyString as PyUnicode};
 pub use self::tuple::PyTuple;
 pub use self::typeobject::PyType;
 
-/// Implements a typesafe conversions throught [FromPyObject], given a typecheck function as second
-/// parameter
-#[macro_export]
-macro_rules! pyobject_downcast (
-    ($name: ty, $checkfunction: path $(,$type_param: ident)*) => (
-        impl<'a, $($type_param,)*> $crate::FromPyObject<'a> for &'a $name
-        {
-            /// Extracts `Self` from the source `PyObject`.
-            fn extract(ob: &'a $crate::types::PyAny) -> $crate::PyResult<Self>
-            {
-                unsafe {
-                    if $checkfunction(ob.as_ptr()) != 0 {
-                        Ok(&*(ob as *const $crate::types::PyAny as *const $name))
-                    } else {
-                        Err($crate::PyDowncastError.into())
-                    }
-                }
-            }
-        }
-    );
-);
-
 #[macro_export]
 macro_rules! pyobject_native_type_named (
     ($name: ty $(,$type_param: ident)*) => {
@@ -79,10 +57,35 @@ macro_rules! pyobject_native_type_named (
 );
 
 #[macro_export]
-macro_rules! pyobject_native_type (
-    ($name: ty, $typeobject: expr, $module: expr, $checkfunction: path $(,$type_param: ident)*) => {
+macro_rules! pyobject_native_type {
+    ($name: ty, $layout: path, $typeobject: expr, $module: expr, $checkfunction: path $(,$type_param: ident)*) => {
+        impl $crate::type_object::PyObjectLayout<$name> for $layout {}
+        impl $crate::type_object::PyObjectSizedLayout<$name> for $layout {}
         pyobject_native_type_named!($name $(,$type_param)*);
-        pyobject_native_type_convert!($name, $typeobject, $module, $checkfunction $(,$type_param)*);
+        pyobject_native_type_convert!($name, $layout, $typeobject, $module, $checkfunction $(,$type_param)*);
+        pyobject_native_type_extract!($name $(,$type_param)*);
+
+        impl<'a, $($type_param,)*> ::std::convert::From<&'a $name> for &'a $crate::types::PyAny {
+            fn from(ob: &'a $name) -> Self {
+                unsafe{&*(ob as *const $name as *const $crate::types::PyAny)}
+            }
+        }
+    };
+    ($name: ty, $layout: path, $typeobject: expr, $checkfunction: path $(,$type_param: ident)*) => {
+        pyobject_native_type! {
+            $name, $layout, $typeobject, Some("builtins"), $checkfunction $(,$type_param)*
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! pyobject_native_var_type {
+    ($name: ty, $typeobject: expr, $module: expr, $checkfunction: path $(,$type_param: ident)*) => {
+        impl $crate::type_object::PyObjectLayout<$name> for $crate::ffi::PyObject {}
+        pyobject_native_type_named!($name $(,$type_param)*);
+        pyobject_native_type_convert!($name, $crate::ffi::PyObject,
+                                      $typeobject, $module, $checkfunction $(,$type_param)*);
+        pyobject_native_type_extract!($name $(,$type_param)*);
 
         impl<'a, $($type_param,)*> ::std::convert::From<&'a $name> for &'a $crate::types::PyAny {
             fn from(ob: &'a $name) -> Self {
@@ -91,42 +94,44 @@ macro_rules! pyobject_native_type (
         }
     };
     ($name: ty, $typeobject: expr, $checkfunction: path $(,$type_param: ident)*) => {
-        pyobject_native_type!{$name, $typeobject, Some("builtins"), $checkfunction $(,$type_param)*}
+        pyobject_native_var_type! {
+            $name, $typeobject, Some("builtins"), $checkfunction $(,$type_param)*
+        }
     };
-);
+}
+
+// NOTE: This macro is not included in pyobject_native_type_convert!
+// because rust-numpy has a special implementation.
+macro_rules! pyobject_native_type_extract {
+    ($name: ty $(,$type_param: ident)*) => {
+        impl<$($type_param,)*> $crate::conversion::FromPyObjectImpl for &'_ $name {
+            type Impl = $crate::conversion::extract_impl::Reference;
+        }
+    }
+}
 
 #[macro_export]
 macro_rules! pyobject_native_type_convert(
-    ($name: ty, $typeobject: expr, $module: expr, $checkfunction: path $(,$type_param: ident)*) => {
-        impl<$($type_param,)*> $crate::type_object::PyTypeInfo for $name {
+    ($name: ty, $layout: path, $typeobject: expr,
+     $module: expr, $checkfunction: path $(,$type_param: ident)*) => {
+        unsafe impl<$($type_param,)*> $crate::type_object::PyTypeInfo for $name {
             type Type = ();
             type BaseType = $crate::types::PyAny;
+            type ConcreteLayout = $layout;
+            type Initializer = $crate::pyclass_init::PyNativeTypeInitializer<Self>;
 
             const NAME: &'static str = stringify!($name);
             const MODULE: Option<&'static str> = $module;
-            const SIZE: usize = ::std::mem::size_of::<$crate::ffi::PyObject>();
-            const OFFSET: isize = 0;
 
             #[inline]
-            unsafe fn type_object() -> &'static mut $crate::ffi::PyTypeObject {
-                &mut $typeobject
+            fn type_object() -> std::ptr::NonNull<$crate::ffi::PyTypeObject> {
+                unsafe { std::ptr::NonNull::new_unchecked(&mut $typeobject as *mut _) }
             }
 
             #[allow(unused_unsafe)]
             fn is_instance(ptr: &$crate::types::PyAny) -> bool {
                 use $crate::AsPyPointer;
-
                 unsafe { $checkfunction(ptr.as_ptr()) > 0 }
-            }
-        }
-
-        impl<$($type_param,)*> $crate::type_object::PyObjectAlloc for $name {}
-
-        unsafe impl<$($type_param,)*> $crate::type_object::PyTypeObject for $name {
-            fn init_type() -> std::ptr::NonNull<$crate::ffi::PyTypeObject> {
-                unsafe {
-                    std::ptr::NonNull::new_unchecked(<Self as $crate::type_object::PyTypeInfo>::type_object() as *mut _)
-                }
             }
         }
 
@@ -158,9 +163,6 @@ macro_rules! pyobject_native_type_convert(
                 f.write_str(&s.to_string_lossy())
             }
         }
-    };
-    ($name: ty, $typeobject: expr, $checkfunction: path $(,$type_param: ident)*) => {
-        pyobject_native_type_convert!{$name, $typeobject, Some("builtins"), $checkfunction $(,$type_param)*}
     };
 );
 

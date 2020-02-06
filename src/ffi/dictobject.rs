@@ -1,5 +1,5 @@
 use crate::ffi::object::*;
-use crate::ffi::pyport::Py_ssize_t;
+use crate::ffi::pyport::{Py_hash_t, Py_ssize_t};
 use std::os::raw::{c_char, c_int};
 
 #[cfg_attr(windows, link(name = "pythonXY"))]
@@ -11,6 +11,22 @@ extern "C" {
     pub static mut PyDictKeys_Type: PyTypeObject;
     pub static mut PyDictItems_Type: PyTypeObject;
     pub static mut PyDictValues_Type: PyTypeObject;
+}
+
+#[repr(C)]
+pub struct PyDictKeysObject {
+    _unused: [u8; 0],
+}
+
+#[repr(C)]
+#[derive(Debug)]
+pub struct PyDictObject {
+    pub ob_base: PyObject,
+    pub ma_used: Py_ssize_t,
+    #[cfg(Py_3_6)]
+    pub ma_version_tag: u64,
+    pub ma_keys: *mut PyDictKeysObject,
+    pub ma_values: *mut *mut PyObject,
 }
 
 #[inline]
@@ -52,6 +68,13 @@ extern "C" {
     pub fn PyDict_GetItemWithError(mp: *mut PyObject, key: *mut PyObject) -> *mut PyObject;
     #[cfg_attr(PyPy, link_name = "PyPyDict_SetItem")]
     pub fn PyDict_SetItem(mp: *mut PyObject, key: *mut PyObject, item: *mut PyObject) -> c_int;
+    #[cfg(not(PyPy))]
+    pub fn _PyDict_SetItem_KnownHash(
+        mp: *mut PyObject,
+        key: *mut PyObject,
+        item: *mut PyObject,
+        hash: Py_hash_t,
+    ) -> c_int;
     #[cfg_attr(PyPy, link_name = "PyPyDict_DelItem")]
     pub fn PyDict_DelItem(mp: *mut PyObject, key: *mut PyObject) -> c_int;
     #[cfg_attr(PyPy, link_name = "PyPyDict_Clear")]

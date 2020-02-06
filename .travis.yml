@@ -24,8 +24,6 @@ matrix:
     - name: PyPy3.5 7.0 # Tested via anaconda PyPy (since travis's PyPy version is too old)
       python: "3.7"
       env: FEATURES="pypy" PATH="$PATH:/opt/anaconda/envs/pypy3/bin"
-  allow_failures:
-    - python: "3.8-dev"
 
 env:
   global:
@@ -56,15 +54,14 @@ script:
   - if ! [[ $FEATURES == *"pypy"* ]]; then export RUSTFLAGS="-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Zno-landing-pads"; fi
   - ./ci/travis/test.sh
 
-after_success:
-  - ./ci/travis/cover.sh || true
-
 deploy:
   - provider: script
     skip_cleanup: true
-    script: ./ci/travis/cover.sh || true
+    script: ./ci/travis/cover.sh
     on:
       branch: master
+      repo: PyO3/pyo3
+      python: 3.6
       condition: $TRAVIS_EVENT_TYPE != "cron"
   - provider: script
     skip_cleanup: true

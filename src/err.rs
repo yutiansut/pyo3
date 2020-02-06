@@ -14,14 +14,15 @@ use libc::c_int;
 use std::ffi::CString;
 use std::io;
 use std::os::raw::c_char;
+use std::ptr::NonNull;
 
 /// Represents a `PyErr` value
 ///
 /// **CAUTION**
 ///
-/// When you construct an instance of `PyErrValue`, we highly recommend to use `from_err_args` method.
-/// If you want to to construct `PyErrValue::ToArgs` directly, please do not forget calling
-/// `Python::acquire_gil`.
+/// When you construct an instance of `PyErrValue`, we highly recommend to use `from_err_args`
+/// method.  If you want to to construct `PyErrValue::ToArgs` directly, please do not forget to
+/// call `Python::acquire_gil`.
 pub enum PyErrValue {
     None,
     Value(PyObject),
@@ -43,10 +44,9 @@ pub struct PyErr {
 
     /// The value of the exception.
     ///
-    /// This can be either an instance of `PyObject`,
-    /// a tuple of arguments to be passed to `ptype`'s constructor,
-    /// or a single argument to be passed to `ptype`'s constructor.
-    /// Call `PyErr::instance()` to get the exception instance in all cases.
+    /// This can be either an instance of `PyObject`, a tuple of arguments to be passed to
+    /// `ptype`'s constructor, or a single argument to be passed to `ptype`'s constructor.  Call
+    /// `PyErr::to_object()` to get the exception instance in all cases.
     pub pvalue: PyErrValue,
 
     /// The `PyTraceBack` object associated with the error.
@@ -180,7 +180,7 @@ impl PyErr {
         name: &str,
         base: Option<&PyType>,
         dict: Option<PyObject>,
-    ) -> *mut ffi::PyTypeObject {
+    ) -> NonNull<ffi::PyTypeObject> {
         let base: *mut ffi::PyObject = match base {
             None => std::ptr::null_mut(),
             Some(obj) => obj.as_ptr(),
@@ -194,8 +194,12 @@ impl PyErr {
         unsafe {
             let null_terminated_name =
                 CString::new(name).expect("Failed to initialize nul terminated exception name");
-            ffi::PyErr_NewException(null_terminated_name.as_ptr() as *mut c_char, base, dict)
-                as *mut ffi::PyTypeObject
+
+            NonNull::new_unchecked(ffi::PyErr_NewException(
+                null_terminated_name.as_ptr() as *mut c_char,
+                base,
+                dict,
+            ) as *mut ffi::PyTypeObject)
         }
     }
 
@@ -325,6 +329,13 @@ impl PyErr {
             PyErrValue::ToObject(ob) => ob.to_object(py).into_ptr(),
         };
         unsafe { ffi::PyErr_Restore(ptype.into_ptr(), pvalue, ptraceback.into_ptr()) }
+    }
+
+    #[doc(hidden)]
+    /// Utility method for proc-macro code
+    pub fn restore_and_null<T>(self, py: Python) -> *mut T {
+        self.restore(py);
+        std::ptr::null_mut()
     }
 
     /// Issue a warning message.
@@ -519,7 +530,7 @@ pub fn panic_after_error() -> ! {
     unsafe {
         ffi::PyErr_Print();
     }
-    panic!("Python API called failed");
+    panic!("Python API call failed");
 }
 
 /// Returns Ok if the error code is not -1.

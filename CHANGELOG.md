@@ -7,6 +7,45 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
+## [0.9.0]
+
+### Changed
+
+* `#[new]` does not take `PyRawObject` and can return `Self`. [#683](https://github.com/PyO3/pyo3/pull/683)
+* The blanket implementations for `FromPyObject` for `&T` and `&mut T` are no longer specializable. Implement `PyTryFrom` for your type to control the behavior of `FromPyObject::extract()` for your types. [#713](https://github.com/PyO3/pyo3/pull/713)
+* The implementation for `IntoPy<U> for T` where `U: FromPy<T>` is no longer specializable. Control the behavior of this via the implementation of `FromPy`. [#713](https://github.com/PyO3/pyo3/pull/713)
+* Use `parking_lot::Mutex` instead of `spin::Mutex`. [#734](https://github.com/PyO3/pyo3/pull/734)
+
+### Added
+
+* `PyClass`, `PyClassShell`, `PyObjectLayout`, `PyClassInitializer`. [#683](https://github.com/PyO3/pyo3/pull/683)
+* Implemented `IntoIterator` for `PySet` and `PyFrozenSet`. [#716](https://github.com/PyO3/pyo3/pull/716)
+* `FromPyObject` is now automatically implemented for `T: Clone` pyclasses. [#730](https://github.com/PyO3/pyo3/pull/730)
+* `#[pyo3(get)]` and `#[pyo3(set)]` will now use the Rust doc-comment from the field for the Python property. [#755](https://github.com/PyO3/pyo3/pull/755)
+
+### Fixed
+
+* Fixed unsoundness of subclassing. [#683](https://github.com/PyO3/pyo3/pull/683).
+* Clear error indicator when the exception is handled on the Rust side. [#719](https://github.com/PyO3/pyo3/pull/719)
+* Usage of raw identifiers with `#[pyo3(set)]`. [#745](https://github.com/PyO3/pyo3/pull/745)
+
+### Removed
+
+* `PyRef`, `PyRefMut`, `PyRawObject`. [#683](https://github.com/PyO3/pyo3/pull/683)
+* `PyNoArgsFunction`. [#741](https://github.com/PyO3/pyo3/pull/741)
+* `initialize_type()`. To set the module name for a `#[pyclass]`, use the `module` argument to the macro. #[751](https://github.com/PyO3/pyo3/pull/751)
+
+## [0.8.5]
+
+* Support for `#[name = "foo"]` attribute for `#[pyfunction]` and in `#[pymethods]`. [#692](https://github.com/PyO3/pyo3/pull/692)
+* Implemented `FromPyObject` for `HashMap` and `BTreeMap`
+
+## [0.8.4]
+
+### Added
+
+* Support for `#[text_signature]` attribute. [#675](https://github.com/PyO3/pyo3/pull/675)
+
 ## [0.8.3]
 
 ### Fixed

@@ -10,14 +10,21 @@ use crate::AsPyPointer;
 use crate::IntoPyPointer;
 use crate::Python;
 use crate::{ffi, IntoPy};
+use crate::{FromPyObject, PyTryFrom};
 use crate::{ToBorrowedObject, ToPyObject};
+use std::collections::{BTreeMap, HashMap};
 use std::{cmp, collections, hash};
 
 /// Represents a Python `dict`.
 #[repr(transparent)]
 pub struct PyDict(PyObject, Unsendable);
 
-pyobject_native_type!(PyDict, ffi::PyDict_Type, ffi::PyDict_Check);
+pyobject_native_type!(
+    PyDict,
+    ffi::PyDictObject,
+    ffi::PyDict_Type,
+    ffi::PyDict_Check
+);
 
 impl PyDict {
     /// Creates a new empty dictionary.
@@ -148,23 +155,20 @@ impl PyDict {
         }
     }
 
-    /// Returns a iterator of (key, value) pairs in this dictionary
-    /// Note that it's unsafe to use when the dictionary might be changed
-    /// by other python code.
+    /// Returns a iterator of (key, value) pairs in this dictionary.
+    ///
+    /// Note that it's unsafe to use when the dictionary might be changed by other code.
     pub fn iter(&self) -> PyDictIterator {
-        let py = self.py();
         PyDictIterator {
-            dict: self.to_object(py),
+            dict: self.as_ref(),
             pos: 0,
-            py,
         }
     }
 }
 
 pub struct PyDictIterator<'py> {
-    dict: PyObject,
+    dict: &'py PyAny,
     pos: isize,
-    py: Python<'py>,
 }
 
 impl<'py> Iterator for PyDictIterator<'py> {
@@ -176,7 +180,7 @@ impl<'py> Iterator for PyDictIterator<'py> {
             let mut key: *mut ffi::PyObject = std::ptr::null_mut();
             let mut value: *mut ffi::PyObject = std::ptr::null_mut();
             if ffi::PyDict_Next(self.dict.as_ptr(), &mut self.pos, &mut key, &mut value) != 0 {
-                let py = self.py;
+                let py = self.dict.py();
                 Some((py.from_borrowed_ptr(key), py.from_borrowed_ptr(value)))
             } else {
                 None
@@ -303,6 +307,37 @@ where
     }
 }
 
+impl<'source, K, V, S> FromPyObject<'source> for HashMap<K, V, S>
+where
+    K: FromPyObject<'source> + cmp::Eq + hash::Hash,
+    V: FromPyObject<'source>,
+    S: hash::BuildHasher + Default,
+{
+    fn extract(ob: &'source PyAny) -> Result<Self, PyErr> {
+        let dict = <PyDict as PyTryFrom>::try_from(ob)?;
+        let mut ret = HashMap::default();
+        for (k, v) in dict.iter() {
+            ret.insert(K::extract(k)?, V::extract(v)?);
+        }
+        Ok(ret)
+    }
+}
+
+impl<'source, K, V> FromPyObject<'source> for BTreeMap<K, V>
+where
+    K: FromPyObject<'source> + cmp::Ord,
+    V: FromPyObject<'source>,
+{
+    fn extract(ob: &'source PyAny) -> Result<Self, PyErr> {
+        let dict = <PyDict as PyTryFrom>::try_from(ob)?;
+        let mut ret = BTreeMap::new();
+        for (k, v) in dict.iter() {
+            ret.insert(K::extract(k)?, V::extract(v)?);
+        }
+        Ok(ret)
+    }
+}
+
 #[cfg(test)]
 mod test {
     use crate::conversion::IntoPy;
@@ -321,6 +356,10 @@ mod test {
         let dict = [(7, 32)].into_py_dict(py);
         assert_eq!(32, dict.get_item(7i32).unwrap().extract::<i32>().unwrap());
         assert_eq!(None, dict.get_item(8i32));
+        let map: HashMap<i32, i32> = [(7, 32)].iter().cloned().collect();
+        assert_eq!(map, dict.extract().unwrap());
+        let map: BTreeMap<i32, i32> = [(7, 32)].iter().cloned().collect();
+        assert_eq!(map, dict.extract().unwrap());
     }
 
     #[test]
@@ -331,6 +370,10 @@ mod test {
         let dict = PyDict::from_sequence(py, items.to_object(py)).unwrap();
         assert_eq!(1, dict.get_item("a").unwrap().extract::<i32>().unwrap());
         assert_eq!(2, dict.get_item("b").unwrap().extract::<i32>().unwrap());
+        let map: HashMap<&str, i32> = [("a", 1), ("b", 2)].iter().cloned().collect();
+        assert_eq!(map, dict.extract().unwrap());
+        let map: BTreeMap<&str, i32> = [("a", 1), ("b", 2)].iter().cloned().collect();
+        assert_eq!(map, dict.extract().unwrap());
     }
 
     #[test]
@@ -577,6 +620,7 @@ mod test {
 
         assert!(py_map.len() == 1);
         assert!(py_map.get_item(1).unwrap().extract::<i32>().unwrap() == 1);
+        assert_eq!(map, py_map.extract().unwrap());
     }
 
     #[test]
@@ -592,6 +636,7 @@ mod test {
 
         assert!(py_map.len() == 1);
         assert!(py_map.get_item(1).unwrap().extract::<i32>().unwrap() == 1);
+        assert_eq!(map, py_map.extract().unwrap());
     }
 
     #[test]
